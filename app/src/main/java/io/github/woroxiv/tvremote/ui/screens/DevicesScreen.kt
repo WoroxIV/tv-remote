@@ -198,7 +198,7 @@ private fun Header(onAbout: () -> Unit) {
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text("Zap Remote", style = MaterialTheme.typography.headlineSmall, color = Palette.Text)
-            Text("Votre télécommande, gratuite et sans pub", style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
+            Text("Gratuite · sans pub · sans compte", style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
         }
         IconButton(onClick = onAbout) {
             Icon(Icons.Rounded.Info, contentDescription = "À propos", tint = Palette.TextDim)
