@@ -128,6 +128,11 @@ fun DevicesScreen(
         ) {
             item { Header(onAbout = { showAbout = true }) }
 
+            if (hasIrEmitter) {
+                item { SectionTitle("Infrarouge") }
+                item { IrCard(hasIrEmitter, onClick = { showIr = true }) }
+            }
+
             if (devices.isNotEmpty()) {
                 item { SectionTitle("Mes téléviseurs") }
                 items(devices, key = { it.id }) { d ->
@@ -163,24 +168,60 @@ fun DevicesScreen(
                 }
             }
 
-            if (hasIrEmitter) {
+            if (!hasIrEmitter) {
                 item { SectionTitle("Sans Wi-Fi") }
-                item {
-                    DeviceRow(
-                        title = "Télécommande infrarouge",
-                        subtitle = "Pour toutes les TV, même non connectées",
-                        protocol = Protocol.IR,
-                        onClick = { showIr = true },
-                        trailing = { Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Palette.TextDim) },
-                    )
-                }
+                item { IrCard(hasIrEmitter, onClick = { showIr = true }) }
             }
         }
     }
 
-    if (showManual) ManualDialog(onDismiss = { showManual = false }, onAdd = { n, h, p -> showManual = false; onAddManual(n, h, p) })
-    if (showIr) IrBrandDialog(onDismiss = { showIr = false }, onPick = { showIr = false; onAddIr(it) })
+    if (showManual) ManualDialog(
+        hasIrEmitter = hasIrEmitter,
+        onDismiss = { showManual = false },
+        onAdd = { n, h, p -> showManual = false; onAddManual(n, h, p) },
+        onAddIr = { showManual = false; onAddIr(it) },
+    )
+    if (showIr) {
+        if (hasIrEmitter) IrBrandDialog(onDismiss = { showIr = false }, onPick = { showIr = false; onAddIr(it) })
+        else NoIrDialog(onDismiss = { showIr = false })
+    }
     if (showAbout) AboutDialog(onDismiss = { showAbout = false })
+}
+
+@Composable
+private fun IrCard(hasIrEmitter: Boolean, onClick: () -> Unit) {
+    DeviceRow(
+        title = "Télécommande infrarouge",
+        subtitle = if (hasIrEmitter) "Toutes les TV, même sans Wi-Fi"
+        else "Non disponible sur ce téléphone",
+        protocol = Protocol.IR,
+        onClick = onClick,
+        trailing = { Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Palette.TextDim) },
+    )
+}
+
+@Composable
+private fun NoIrDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pas d'émetteur infrarouge") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Android indique que ce téléphone n'a pas d'émetteur infrarouge. " +
+                        "C'est une petite fenêtre noire sur la tranche du haut, présente surtout sur les " +
+                        "Xiaomi, Redmi, Poco, certains Honor/Huawei et quelques anciens Samsung/LG."
+                )
+                Text(
+                    "Bonne nouvelle : la plupart des TV récentes se pilotent par le Wi-Fi. " +
+                        "Allumez la TV, connectez-la au même Wi-Fi que le téléphone, et elle apparaîtra dans " +
+                        "« Sur votre Wi-Fi » — ou utilisez « Ajouter une TV » avec son adresse IP.",
+                    style = MaterialTheme.typography.bodySmall, color = Palette.TextDim,
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Compris") } },
+    )
 }
 
 @Composable
@@ -333,14 +374,21 @@ private fun SavedDeviceCard(device: TvDevice, onOpen: () -> Unit, onRename: (Str
     }
 }
 
-private val manualProtocols = listOf(Protocol.ANDROID_TV, Protocol.SAMSUNG, Protocol.LG, Protocol.ROKU)
+private val manualProtocols = listOf(Protocol.ANDROID_TV, Protocol.SAMSUNG, Protocol.LG, Protocol.ROKU, Protocol.IR)
 
 @Composable
-private fun ManualDialog(onDismiss: () -> Unit, onAdd: (String, String, Protocol) -> Unit) {
+private fun ManualDialog(
+    hasIrEmitter: Boolean,
+    onDismiss: () -> Unit,
+    onAdd: (String, String, Protocol) -> Unit,
+    onAddIr: (IrBrand) -> Unit,
+) {
     var name by rememberSaveable { mutableStateOf("") }
     var host by rememberSaveable { mutableStateOf("") }
     var protocol by rememberSaveable { mutableStateOf(Protocol.ANDROID_TV) }
+    var brand by rememberSaveable { mutableStateOf<IrBrand?>(null) }
     val validHost = host.trim().matches(Regex("^[A-Za-z0-9.\\-:]+$"))
+    val ir = protocol == Protocol.IR
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Ajouter une TV") },
@@ -360,20 +408,48 @@ private fun ManualDialog(onDismiss: () -> Unit, onAdd: (String, String, Protocol
                         }
                     }
                 }
-                OutlinedTextField(
-                    host, { host = it }, singleLine = true,
-                    label = { Text("Adresse IP (ex. 192.168.1.20)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                )
-                OutlinedTextField(name, { name = it }, singleLine = true, label = { Text("Nom (facultatif)") })
-                Text(
-                    "L'adresse IP se trouve dans les réglages réseau de la TV.",
-                    style = MaterialTheme.typography.bodySmall, color = Palette.TextDim,
-                )
+                if (ir) {
+                    if (!hasIrEmitter) {
+                        Text(
+                            "Aucun émetteur infrarouge n'est détecté sur ce téléphone : cette option ne " +
+                                "fonctionnera pas. Utilisez plutôt le Wi-Fi.",
+                            style = MaterialTheme.typography.bodySmall, color = Palette.Warning,
+                        )
+                    }
+                    Text("Marque", style = MaterialTheme.typography.labelLarge, color = Palette.TextDim)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IrBrand.entries.chunked(3).forEach { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                row.forEach { b ->
+                                    FilterChip(selected = brand == b, onClick = { brand = b }, label = { Text(b.label) })
+                                }
+                            }
+                        }
+                    }
+                    Text(
+                        "Pointez le haut du téléphone vers la TV.",
+                        style = MaterialTheme.typography.bodySmall, color = Palette.TextDim,
+                    )
+                } else {
+                    OutlinedTextField(
+                        host, { host = it }, singleLine = true,
+                        label = { Text("Adresse IP (ex. 192.168.1.20)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    )
+                    OutlinedTextField(name, { name = it }, singleLine = true, label = { Text("Nom (facultatif)") })
+                    Text(
+                        "L'adresse IP se trouve dans les réglages réseau de la TV.",
+                        style = MaterialTheme.typography.bodySmall, color = Palette.TextDim,
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(enabled = validHost, onClick = { onAdd(name, host, protocol) }) { Text("Connecter") }
+            if (ir) {
+                TextButton(enabled = brand != null && hasIrEmitter, onClick = { brand?.let(onAddIr) }) { Text("Ouvrir") }
+            } else {
+                TextButton(enabled = validHost, onClick = { onAdd(name, host, protocol) }) { Text("Connecter") }
+            }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
     )
