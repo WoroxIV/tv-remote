@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Remote body -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M54,28m-0,0h-0a13,13 0,0 0,-13 13v28a13,13 0,0 0,13 13h0a13,13 0,0 0,13 -13v-28a13,13 0,0 0,-13 -13z" />
+    <!-- D-pad ring -->
+    <path android:fillColor="#FF5B4BE0"
+        android:pathData="M54,44m-9,0a9,9 0,1 1,18 0a9,9 0,1 1,-18 0" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M54,44m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0" />
+    <!-- Buttons -->
+    <path android:fillColor="#FF22B8D4"
+        android:pathData="M49,62m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#FF22B8D4"
+        android:pathData="M59,62m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#FF22B8D4"
+        android:pathData="M49,71m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#FF22B8D4"
+        android:pathData="M59,71m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <!-- Signal waves -->
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="3" android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M46,21a12,12 0,0 1,16 0" />
+    <path android:strokeColor="#B3FFFFFF" android:strokeWidth="3" android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M41,15a20,20 0,0 1,26 0" />
+</vector>

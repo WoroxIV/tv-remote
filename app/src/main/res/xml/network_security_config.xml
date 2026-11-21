@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TVs only speak plain HTTP / WebSocket on the local network (Roku port 8060,
+  LG port 3000, Samsung port 8001). The app never contacts internet servers.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
